@@ -1,12 +1,13 @@
-import { UserButton } from '@clerk/nextjs'
-import React from 'react'
+import React from 'react';
+import { UserButton } from '@clerk/nextjs';
+import AddCourse from './_components/AddCourse.jsx'
 
 function Dashboard() {
   return (
     <div>
-        <UserButton/>
+      <AddCourse/>
     </div>
-  )
+  );
 }
 
-export default Dashboard
+export default Dashboard;
