@@ -1,12 +1,16 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import React from "react";
+import React, { useEffect } from "react";
 import {
   HiMiniSquares2X2,
   HiLightBulb,
   HiClipboardDocumentCheck,
 } from "react-icons/hi2";
-import { useState } from "react";
+import { useState, useContext } from "react";
+import TopicDescription from "./_components/TopicDescription";
+import SelectCategory from "./_components/SelectCategory";
+import SelectOption from "./_components/SelectOption";
+import { UserInputContext } from "@/app/_context/UserInputContext";
 
 function CreateCourse() {
   const StepperOption = [
@@ -27,6 +31,43 @@ function CreateCourse() {
     },
   ];
   const [activeindex, setActiveindex] = useState(0);
+
+  const { userCourseInput, setUserCourseInput } = useContext(UserInputContext);
+
+  useEffect(() => {
+    console.log(userCourseInput);
+  }, [userCourseInput]);
+
+  // used to check Next Button enable or disable Status
+
+  const checkstatus = () => {
+    if (userCourseInput?.length == 0) {
+      return true;
+    }
+    if (
+      activeindex == 0 &&
+      (userCourseInput?.category == undefined ||
+        userCourseInput?.category?.length == 0)
+    ) {
+      return true;
+    }
+    if (
+      activeindex == 1 &&
+      (userCourseInput?.topic?.length == 0 ||
+        userCourseInput?.topic == undefined)
+    ) {
+      return true;
+    } else if (
+      activeindex == 2 &&
+      (userCourseInput?.level == undefined ||
+        userCourseInput?.Duration == undefined ||
+        userCourseInput?.displayVideo == undefined ||
+        userCourseInput?.noOfChapter == undefined)
+    ) {
+      return true;
+    }
+    return false;
+  };
   return (
     <div>
       {/* Stepper */}
@@ -59,24 +100,36 @@ function CreateCourse() {
 
       <div className="px-10 md:px-20 lg:px-44 mt-10">
         {/* Component */}
+        {activeindex == 0 ? (
+          <SelectCategory />
+        ) : activeindex == 1 ? (
+          <TopicDescription />
+        ) : (
+          <SelectOption />
+        )}
 
         {/* Next Previous Button */}
-
         <div className="flex justify-between mt-10">
           <Button
             disabled={activeindex === 0}
-            variant='outline'
+            variant="outline"
             onClick={() => setActiveindex(activeindex - 1)}
           >
             Previous
           </Button>
           {activeindex < 2 && (
-            <Button onClick={() => setActiveindex(activeindex + 1)}>
+            <Button
+              disabled={checkstatus()}
+              onClick={() => setActiveindex(activeindex + 1)}
+            >
               Next
             </Button>
           )}
           {activeindex == 2 && (
-            <Button onClick={() => setActiveindex(activeindex + 1)}>
+            <Button
+              disabled={checkstatus()}
+              onClick={() => setActiveindex(activeindex + 1)}
+            >
               Generate Course Layout
             </Button>
           )}
