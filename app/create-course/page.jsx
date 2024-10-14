@@ -1,6 +1,6 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import React, { useEffect } from "react";
+import React, { useEffect} from "react";
 import {
   HiMiniSquares2X2,
   HiLightBulb,
@@ -11,6 +11,13 @@ import TopicDescription from "./_components/TopicDescription";
 import SelectCategory from "./_components/SelectCategory";
 import SelectOption from "./_components/SelectOption";
 import { UserInputContext } from "@/app/_context/UserInputContext";
+import { GenerateCourseLayout_AI } from "../../config/Aimodel";
+import LoadingDialog from "./_components/LoadingDialog"
+import uuid4 from "uuid4";
+import { useUser } from "@clerk/nextjs";
+import { CourseList } from '../../config/schema'
+import { db } from '../../config/db'
+import { useRouter} from 'next/navigation'
 
 function CreateCourse() {
   const StepperOption = [
@@ -31,8 +38,11 @@ function CreateCourse() {
     },
   ];
   const [activeindex, setActiveindex] = useState(0);
+  const {user} = useUser()
+  const router = useRouter()
 
   const { userCourseInput, setUserCourseInput } = useContext(UserInputContext);
+  const [loading , setLoading] = useState(false)
 
   useEffect(() => {
     console.log(userCourseInput);
@@ -68,6 +78,52 @@ function CreateCourse() {
     }
     return false;
   };
+
+  const GenerateCourseLayout = async () => {
+    setLoading(true)
+    const BASIC_PROMPT =
+      "Generate A Course Tutorial on Following Detail With field as Course Name, Description, Along with Chapter Name, about, Duration: ";
+    const USER_INPUT_PROMPT =
+      " Category: " +
+      userCourseInput?.category +
+      ", Topic: " +
+      userCourseInput?.topic +
+      ", Level:" +
+      userCourseInput?.level +
+      ", Duration:" +
+      userCourseInput?.Duration +
+      ", NoOf Chapters:" +
+      userCourseInput?.noOfChapter +
+      ", in JSON format";
+    const FINAL_PROMPT = BASIC_PROMPT + USER_INPUT_PROMPT;
+    console.log(FINAL_PROMPT);
+    const result = await GenerateCourseLayout_AI.sendMessage(FINAL_PROMPT);
+    console.log(result.response?.text())
+    console.log(JSON.parse(result.response?.text()))
+    saveCourseLayoutIndb(JSON.parse(result.response?.text()))
+    setLoading(false)
+  };
+
+  const saveCourseLayoutIndb = async(courseLayout) =>{
+    var id = uuid4();
+    setLoading(true)
+    console.log(db);
+    const result = await db.insert(CourseList).values({
+      courseId: id,
+      name: userCourseInput?.topic,
+      level: userCourseInput?.level,
+      category: userCourseInput?.category,
+      courseOutput: courseLayout,
+      createdBy: user?.primaryEmailAddress?.emailAddress,
+      userName: user?.fullName,
+      userProfileImage: user?.imageUrl
+    });  
+
+    console.log("Finish")
+    setLoading(false)
+    router.replace('/create-course/'+id)
+  }
+
   return (
     <div>
       {/* Stepper */}
@@ -128,13 +184,14 @@ function CreateCourse() {
           {activeindex == 2 && (
             <Button
               disabled={checkstatus()}
-              onClick={() => setActiveindex(activeindex + 1)}
+              onClick={() => GenerateCourseLayout()}
             >
               Generate Course Layout
             </Button>
           )}
         </div>
       </div>
+      <LoadingDialog loading={loading}/>
     </div>
   );
 }
