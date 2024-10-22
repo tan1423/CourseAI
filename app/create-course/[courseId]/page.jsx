@@ -7,10 +7,14 @@ import { useUser } from "@clerk/nextjs";
 import CourseBasicInfo from "./_components/CourseBasicInfo";
 import CourseDetail from "./_components/CourseDetail";
 import ChapterList from "./_components/ChapterList";
+import { Button } from "@/components/ui/button";
+import { GenerateChapterContent_AI } from "@/config/Aimodel";
+import LoadingDialog from "../_components/LoadingDialog";
 
 function courseLayout({ params }) {
   const { user } = useUser();
   const [course, setCourse] = useState([]);
+  const [loading, setLoading] = useState(false);
   useEffect(() => {
     params && GetCourse();
   }, [params, user]);
@@ -29,16 +33,49 @@ function courseLayout({ params }) {
     setCourse(result[0]);
     console.log(result);
   };
+
+  const GenerateChapterContent = () => {
+    setLoading(true);
+    const chapters = course?.courseOutput?.course?.chapters;
+    chapters.forEach(async (chapter, index) => {
+      const PROMPT =
+        "Explain the concept in Detail on Topic:" +
+        course?.name +
+        ", Chapter:" +
+        chapter?.name +
+        " in JSON Format with list of array with field as title, explanation on give chapter in detail, CodeExample(Code field in <precode> format) if applicable";
+      console.log(PROMPT);
+      if (index < 3) {
+        try {
+          const result = await GenerateChapterContent_AI.sendMessage(PROMPT);
+          console.log(result?.response?.text());
+          //Generate Video URL
+
+          //Save Chapter Content + Video URL
+
+          setLoading(false)
+        } catch (error) {
+          setLoading(false);
+          console.log(error);
+        }
+      }
+    });
+  };
   return (
     <div className="mt-10 px-7 md:px-20 lg:px-44">
       <h2 className="font-bold text-center text-2xl">Course Layout</h2>
 
+      <LoadingDialog loading={loading} />
       {/* basic Info */}
-      <CourseBasicInfo course={course} refreshData={()=>GetCourse()} />
+      <CourseBasicInfo course={course} refreshData={() => GetCourse()} />
       {/* Course Detail */}
       <CourseDetail course={course} />
       {/* List of Lesson */}
-      <ChapterList course={course} refreshData={()=>GetCourse()}/>
+      <ChapterList course={course} refreshData={() => GetCourse()} />
+
+      <Button onClick={GenerateChapterContent} className="my-10">
+        Generate Course Content
+      </Button>
     </div>
   );
 }
