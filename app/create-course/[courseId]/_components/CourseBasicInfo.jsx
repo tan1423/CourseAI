@@ -3,47 +3,61 @@ import { HiOutlinePuzzle } from "react-icons/hi";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import EditCourseBasicInfo from "./EditCourseBasicInfo";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage"; // import getDownloadURL
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "@/config/firebaseConfig";
 import { CourseList } from "@/config/schema";
 import { eq } from "drizzle-orm";
+import { db } from "@/config/db"; // Make sure db is imported here
 
 function CourseBasicInfo({ course, refreshData }) {
-  const [selectedfile, setSelectedfile] = useState();
+  const [selectedFile, setSelectedFile] = useState(null);
 
-  // Select file and upload to firebase storage
+  // Set the initial banner when course loads
+  useEffect(() => {
+    if (course?.courseBanner) {
+      setSelectedFile(course.courseBanner);
+    }
+  }, [course]);
+
+  // Select file and upload to Firebase storage
   const onFileSelected = async (event) => {
     const file = event.target.files[0];
-    const objectUrl = URL.createObjectURL(file);
-    setSelectedfile(objectUrl);
+    if (file) {
+      const objectUrl = URL.createObjectURL(file);
+      setSelectedFile(objectUrl);
 
-    const fileName = Date.now() + ".jpg";
-    const storageRef = ref(storage, "ai-course/" + fileName);
-    
-    try {
-      await uploadBytes(storageRef, file);
-      console.log("Upload successful");
+      const fileName = Date.now() + ".jpg";
+      const storageRef = ref(storage, "ai-course/" + fileName);
 
-      // Fetch download URL after successful upload
-      const downloadUrl = await getDownloadURL(storageRef);
-      await db.update(CourseList).set({
-        courseBanner:downloadUrl
-      }).where(eq(CourseList.id, course?.id))
-      console.log("File available at:", downloadUrl);
-      
-    } catch (error) {
-      console.error("Upload failed", error);
+      try {
+        await uploadBytes(storageRef, file);
+        console.log("Upload successful");
+
+        // Fetch download URL after successful upload
+        const downloadUrl = await getDownloadURL(storageRef);
+        await db
+          .update(CourseList)
+          .set({
+            courseBanner: downloadUrl,
+          })
+          .where(eq(CourseList.id, course?.id));
+
+        console.log("File available at:", downloadUrl);
+        refreshData(); // Trigger data refresh after the update
+      } catch (error) {
+        console.error("Upload failed", error);
+      }
     }
   };
 
   // Revoke the object URL to avoid memory leaks
   useEffect(() => {
     return () => {
-      if (selectedfile) {
-        URL.revokeObjectURL(selectedfile);
+      if (selectedFile && selectedFile.startsWith("blob:")) {
+        URL.revokeObjectURL(selectedFile);
       }
     };
-  }, [selectedfile]);
+  }, [selectedFile]);
 
   return (
     <div className="p-6 md:p-10 border rounded-xl shadow-sm mt-5 bg-white">
@@ -74,10 +88,11 @@ function CourseBasicInfo({ course, refreshData }) {
         <div className="w-full">
           <label htmlFor="upload-image">
             <Image
-              src={selectedfile ? selectedfile : "/placeholder.svg"}
+              src={selectedFile ? selectedFile : "/placeholder.svg"}
               width={300}
               height={300}
               className="w-full rounded-xl h-[250px] md:h-[300px] object-cover shadow-sm cursor-pointer"
+              alt="Course Banner"
             />
           </label>
           <input
