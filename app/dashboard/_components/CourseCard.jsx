@@ -6,6 +6,7 @@ import DropdownOption from "./DropdownOption.jsx";
 import { db } from "@/config/db.jsx";
 import { CourseList } from "@/config/schema.jsx";
 import { eq } from "drizzle-orm";
+import Link from "next/link.js";
 
 function CourseCard({ course, refreshData }) {
   const handleOnDelete = async () => {
@@ -14,18 +15,20 @@ function CourseCard({ course, refreshData }) {
       .where(eq(CourseList.id, course?.id))
       .returning({ id: CourseList?.id });
 
-      if(resp){
-        refreshData()
-      }
+    if (resp) {
+      refreshData();
+    }
   };
   return (
     <div className="shadow-sm rounded-lg border p-2 cursor-pointer mt-3 hover:border-primary">
-      <Image
-        className="w-full h-[200px] object-cover rounded-lg"
-        src={course?.courseBanner}
-        width={300}
-        height={200}
-      />
+      <Link href={"/course/" + course?.courseId}>
+        <Image
+          className="w-full h-[200px] object-cover rounded-lg"
+          src={course?.courseBanner}
+          width={300}
+          height={200}
+        />
+      </Link>
       <div className="p-2">
         <h2 className="font-medium text-lg flex items-center justify-between">
           {course?.courseOutput?.course.name}
