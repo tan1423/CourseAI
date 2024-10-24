@@ -38,7 +38,7 @@ function courseLayout({ params }) {
     console.log(result);
   };
 
-  const GenerateChapterContent = () => {
+  const GenerateChapterContent = async () => {
     setLoading(true);
     const chapters = course?.courseOutput?.course?.chapters;
     chapters.forEach(async (chapter, index) => {
@@ -78,6 +78,9 @@ function courseLayout({ params }) {
         setLoading(false);
         console.log(error);
       }
+      await db.update(CourseList).set({
+        publish:true
+      })
       router.replace("/create-course/" + course?.courseId + "/finish");
     });
   };

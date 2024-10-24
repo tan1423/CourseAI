@@ -1,9 +1,15 @@
-import React, { children } from "react";
+'use client'
+import React, { useState } from "react";
 import Header from "../dashboard/_components/Header";
 import SideBar from "./_components/SideBar";
+import { UserCourseListContext } from '../_context/UserCourseListContext'
+
 
 function Dashboardlayout({ children }) {
+
+  const [userCourseList, setUserCourseList] = useState()
   return (
+    <UserCourseListContext.Provider value={{userCourseList, setUserCourseList}}> 
     <div>
       <div className="md:w-64 hidden md:block">
         <SideBar />
@@ -13,6 +19,7 @@ function Dashboardlayout({ children }) {
         <div className="p-10">{children}</div>
       </div>
     </div>
+    </UserCourseListContext.Provider>
   );
 }
 
