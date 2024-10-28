@@ -42,12 +42,20 @@ function courseLayout({ params }) {
     setLoading(true);
     const chapters = course?.courseOutput?.course?.chapters;
     chapters.forEach(async (chapter, index) => {
-      const PROMPT =
-        "Explain the concept in Detail on Topic:" +
-        course?.name +
-        ", Chapter:" +
-        chapter?.name +
-        " in JSON Format with list of array with field as title, explanation on give chapter in detail, CodeExample(Code field in <precode> format) if applicable";
+      const PROMPT = `
+        Explain the concept in detail on Topic: ${course?.name}, Chapter: ${chapter?.name} in JSON format.
+        The JSON should follow this structure:
+        {
+          "title": "<Chapter Title>",
+          "explanation": "<Brief explanation of the chapter>",
+          "chapter_details": [
+            {
+              "title": "<Sub-topic title>",
+              "explanation": "<Detailed explanation>",
+              "code_example": "<Code example in <precode> format, if applicable>"
+            }
+          ]
+        }`;
 
       console.log(PROMPT);
 
@@ -57,13 +65,14 @@ function courseLayout({ params }) {
 
         // Fetch video from YouTube
         service.getVideos(course?.name + ":" + chapter?.name).then((resp) => {
-          console.log(resp);
+          console.log("this is resp:- ", resp);
           videoId = resp[0]?.id?.videoId;
         });
 
         //Generate Content Chapter
         const result = await GenerateChapterContent_AI.sendMessage(PROMPT);
-        //console.log(result?.response?.text());
+
+        // console.log("the result is :-", result?.response?.text());
         const content = JSON.parse(result?.response?.text());
 
         // TODO: Save Chapter Content + Video URL
@@ -79,9 +88,10 @@ function courseLayout({ params }) {
         console.log(error);
       }
       await db.update(CourseList).set({
-        publish:true
-      })
+        publish: true,
+      });
       router.replace("/create-course/" + course?.courseId + "/finish");
+      console.log("final");
     });
   };
 

@@ -8,6 +8,7 @@ import { storage } from "@/config/firebaseConfig";
 import { CourseList } from "@/config/schema";
 import { eq } from "drizzle-orm";
 import { db } from "@/config/db"; // Ensure db is imported
+import Link from 'next/link'
 
 function CourseBasicInfo({ course, refreshData, edit = true }) {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -112,9 +113,11 @@ function CourseBasicInfo({ course, refreshData, edit = true }) {
           </h2>
 
           {/* Start Button */}
+          {!edit && <Link href={'/course/'+course?.courseId+'/start'}>
           <Button className="w-full md:w-1/2 mt-4 md:mt-6">
             Start Course
           </Button>
+          </Link>}
         </div>
 
         {/* Course Image Section */}
