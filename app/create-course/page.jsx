@@ -100,8 +100,8 @@ function CreateCourse() {
     const result = await GenerateCourseLayout_AI.sendMessage(FINAL_PROMPT);
     console.log(result.response?.text())
     console.log(JSON.parse(result.response?.text()))
-    saveCourseLayoutIndb(JSON.parse(result.response?.text()))
     setLoading(false)
+    saveCourseLayoutIndb(JSON.parse(result.response?.text()))
   };
 
   const saveCourseLayoutIndb = async(courseLayout) =>{
